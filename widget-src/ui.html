@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --text: #1e1e1e;
+    --muted: #7a7a7a;
+    --line: #e1e1e1;
+    --field: #f5f5f5;
+    --blue: #0d99ff;
+    --red: #d33;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font: 11px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .field { margin-bottom: 14px; }
+  input, textarea {
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    padding: 7px 8px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: var(--field);
+    outline: none;
+    resize: none;
+  }
+  input:focus, textarea:focus {
+    background: #fff;
+    border-color: var(--blue);
+  }
+  input.invalid { border-color: var(--red); background: #fff; }
+  .hint {
+    margin-top: 6px;
+    color: var(--muted);
+    min-height: 15px;
+  }
+  .hint.error { color: var(--red); }
+  .hint.ok { color: #0a7a3f; }
+  .row {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .row .spacer { margin-right: auto; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+  button:disabled { opacity: .4; cursor: default; }
+  button.ghost { border-color: transparent; color: var(--muted); }
+</style>
+</head>
+<body>
+  <form id="form">
+    <div class="field">
+      <label for="url">Miro board link</label>
+      <input id="url" type="url" placeholder="https://miro.com/app/board/uXjV…/" autocomplete="off" />
+      <div class="hint" id="hint">Paste a board link. Details load automatically.</div>
+    </div>
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" type="text" placeholder="Board title" />
+    </div>
+    <div class="field">
+      <label for="note">Note</label>
+      <textarea id="note" rows="2" placeholder="What this board is for (optional)"></textarea>
+    </div>
+    <div class="row">
+      <button type="button" class="ghost spacer" id="refetch">Reload details</button>
+      <button type="button" id="cancel">Cancel</button>
+      <button type="submit" class="primary" id="save">Save</button>
+    </div>
+  </form>
+
+<script>
+  var BOARD_URL = /miro\.com\/app\/(?:board|live-embed)\/([A-Za-z0-9_=+-]+)/;
+
+  var els = {
+    form: document.getElementById('form'),
+    url: document.getElementById('url'),
+    title: document.getElementById('title'),
+    note: document.getElementById('note'),
+    hint: document.getElementById('hint'),
+    save: document.getElementById('save'),
+    cancel: document.getElementById('cancel'),
+    refetch: document.getElementById('refetch')
+  };
+
+  var details = { author: '', thumbnail: '' };
+  var titleTouched = false;
+  var lastFetched = '';
+
+  function send(message) {
+    parent.postMessage({ pluginMessage: message }, '*');
+  }
+
+  function parseBoardId(url) {
+    var match = (url || '').match(BOARD_URL);
+    return match ? match[1] : null;
+  }
+
+  function setHint(text, kind) {
+    els.hint.textContent = text;
+    els.hint.className = 'hint' + (kind ? ' ' + kind : '');
+  }
+
+  function fetchDetails(url) {
+    var endpoint = 'https://miro.com/api/v1/oembed?format=json&url=' + encodeURIComponent(url);
+    return fetch(endpoint).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (body) {
+        if (response.status === 404) {
+          throw new Error('Board not found, or it is not shared by link.');
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('No access. Set the board to "anyone with the link".');
+        }
+        if (!response.ok) {
+          var reason = body && body.error && body.error.message;
+          throw new Error(reason || 'Miro returned ' + response.status + '.');
+        }
+        return {
+          title: body.title || '',
+          author: body.author_name || '',
+          thumbnail: body.thumbnail_url || ''
+        };
+      });
+    });
+  }
+
+  function load(url, force) {
+    var boardId = parseBoardId(url);
+    els.url.classList.toggle('invalid', url.length > 0 && !boardId);
+    if (!boardId) {
+      setHint(url ? 'That does not look like a Miro board link.' : 'Paste a board link. Details load automatically.', url ? 'error' : '');
+      return;
+    }
+    if (!force && lastFetched === url) return;
+    lastFetched = url;
+    setHint('Loading board details…');
+    fetchDetails(url).then(function (result) {
+      details.author = result.author;
+      details.thumbnail = result.thumbnail;
+      if (result.title && (!titleTouched || !els.title.value)) {
+        els.title.value = result.title;
+      }
+      setHint(result.title ? 'Found "' + result.title + '".' : 'Board reachable, but it returned no title.', 'ok');
+    }).catch(function (error) {
+      details.author = '';
+      details.thumbnail = '';
+      setHint(error.message + ' You can still save it with a title you type.', 'error');
+    });
+  }
+
+  var debounce;
+  els.url.addEventListener('input', function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(function () { load(els.url.value.trim(), false); }, 400);
+  });
+  els.title.addEventListener('input', function () { titleTouched = true; });
+  els.refetch.addEventListener('click', function () { load(els.url.value.trim(), true); });
+  els.cancel.addEventListener('click', function () { send({ type: 'cancel' }); });
+
+  els.form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var url = els.url.value.trim();
+    var boardId = parseBoardId(url);
+    if (!boardId) {
+      els.url.classList.add('invalid');
+      setHint('A Miro board link is required.', 'error');
+      els.url.focus();
+      return;
+    }
+    send({
+      type: 'save',
+      board: {
+        url: url,
+        boardId: boardId,
+        title: els.title.value.trim(),
+        note: els.note.value.trim(),
+        author: details.author,
+        thumbnail: details.thumbnail
+      }
+    });
+  });
+
+  onmessage = function (event) {
+    var message = event.data && event.data.pluginMessage;
+    if (!message) return;
+
+    if (message.type === 'edit') {
+      var board = message.board || {};
+      els.url.value = board.url || '';
+      els.title.value = board.title || '';
+      els.note.value = board.note || '';
+      titleTouched = Boolean(board.title);
+      details.author = board.author || '';
+      details.thumbnail = board.thumbnail || '';
+      els.url.focus();
+      if (board.url) load(board.url, false);
+    }
+
+    if (message.type === 'sync') {
+      fetchDetails(message.url).then(function (result) {
+        send({ type: 'synced', details: result });
+      }).catch(function (error) {
+        send({ type: 'sync-error', message: error.message });
+      });
+    }
+  };
+
+  send({ type: 'ready' });
+</script>
+</body>
+</html>

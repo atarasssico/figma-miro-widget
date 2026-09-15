@@ -1,0 +1,29 @@
+{
+  "name": "miro-board-widget",
+  "version": "1.0.0",
+  "description": "Figma/FigJam widget that keeps a Miro board link and its details on the canvas",
+  "scripts": {
+    "build": "npm run build:ui && npm run build:code",
+    "build:code": "esbuild widget-src/code.tsx --bundle --outfile=dist/code.js --target=es2020",
+    "build:ui": "esbuild widget-src/ui.html --loader:.html=copy --outdir=dist",
+    "watch": "npm run build:ui && npm run build:code -- --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "tsc": "tsc --noEmit -p widget-src"
+  },
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@figma/eslint-plugin-figma-plugins": "*",
+    "@figma/plugin-typings": "*",
+    "@figma/widget-typings": "*",
+    "esbuild": "*",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

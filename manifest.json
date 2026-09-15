@@ -1,0 +1,23 @@
+{
+  "name": "Miro board",
+  "id": "1681578214532552517",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "containsWidget": true,
+  "widgetApi": "1.0.0",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://miro.com",
+      "https://*.miro.com"
+    ],
+    "reasoning": "Reads public board metadata (title, author, thumbnail) from the Miro oEmbed endpoint for the board the user links."
+  }
+}

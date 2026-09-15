@@ -11,7 +11,7 @@
 
 
 A Figma / FigJam widget that pins a Miro board to the canvas: the link, the board
-title, an optional note, and a status lozenge. Shaped like the Jira widget card.
+title, an optional note, and a status pill. Shaped like the Jira widget card.
 
 ## Run it locally
 

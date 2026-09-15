@@ -6,6 +6,10 @@
 > identify the service a card links to; the mark's path comes from the
 > [Simple Icons](https://simpleicons.org) set (CC0).
 
+
+<img width="915" height="516" alt="Screenshot 2026-09-15 at 09 13 58" src="https://github.com/user-attachments/assets/b4abfde2-d4ba-4d50-97ee-0e7bb43fc3b8" />
+
+
 A Figma / FigJam widget that pins a Miro board to the canvas: the link, the board
 title, an optional note, and a status lozenge. Shaped like the Jira widget card.
 

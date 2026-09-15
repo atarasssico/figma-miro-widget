@@ -12,7 +12,7 @@
     "tsc": "tsc --noEmit -p widget-src"
   },
   "author": "",
-  "license": "",
+  "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@figma/eslint-plugin-figma-plugins": "*",

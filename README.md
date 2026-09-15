@@ -1,5 +1,11 @@
 # Miro board widget
 
+> **Unofficial.** A widget I wanted for my own Figma files, built and maintained
+> independently. Not affiliated with, authorised by, or endorsed by Miro or Figma.
+> "Miro" and the Miro logo are trademarks of their owner and appear here only to
+> identify the service a card links to; the mark's path comes from the
+> [Simple Icons](https://simpleicons.org) set (CC0).
+
 A Figma / FigJam widget that pins a Miro board to the canvas: the link, the board
 title, an optional note, and a status lozenge. Shaped like the Jira widget card.
 
